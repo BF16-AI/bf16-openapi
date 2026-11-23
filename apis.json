@@ -1,0 +1,61 @@
+{
+  "aid": "bf16-ai",
+  "name": "bf16.ai LLM Inference API",
+  "description": "High-speed OpenAI-compatible and Anthropic-compatible LLM inference API for coding agents and personal assistants with 1M-token context windows, prompt caching, and strict Zero Data Retention (ZDR).",
+  "image": "https://bf16.ai/logo.png",
+  "tags": [
+    "ai",
+    "llm",
+    "inference",
+    "openai-compatible",
+    "anthropic-compatible",
+    "coding-agents"
+  ],
+  "created": "2026-11-24",
+  "modified": "2026-11-24",
+  "url": "https://raw.githubusercontent.com/BF16-AI/bf16-openapi/main/apis.json",
+  "specificationVersion": "0.19",
+  "apis": [
+    {
+      "aid": "bf16-ai:inference-api",
+      "name": "bf16.ai Inference Gateway",
+      "description": "Unified gateway exposing /v1/models, /v1/chat/completions, /v1/responses, and /v1/messages.",
+      "humanURL": "https://bf16.ai/docs",
+      "baseURL": "https://api.bf16.ai/v1",
+      "tags": ["llm", "inference", "openai", "anthropic"],
+      "properties": [
+        {
+          "type": "OpenAPI",
+          "url": "https://raw.githubusercontent.com/BF16-AI/bf16-openapi/main/openapi.yaml"
+        },
+        {
+          "type": "Documentation",
+          "url": "https://bf16.ai/docs"
+        },
+        {
+          "type": "Pricing",
+          "url": "https://bf16.ai/pricing"
+        },
+        {
+          "type": "StatusPage",
+          "url": "https://bf16.ai/status"
+        },
+        {
+          "type": "TermsOfService",
+          "url": "https://bf16.ai/legal/terms"
+        },
+        {
+          "type": "PrivacyPolicy",
+          "url": "https://bf16.ai/legal/privacy"
+        }
+      ]
+    }
+  ],
+  "maintainers": [
+    {
+      "FN": "BF16 Team",
+      "email": "hello@bf16.ai",
+      "url": "https://bf16.ai"
+    }
+  ]
+}

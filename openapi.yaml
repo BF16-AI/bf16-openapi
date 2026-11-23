@@ -1,0 +1,399 @@
+openapi: 3.0.3
+info:
+  title: bf16.ai LLM Inference API
+  version: 1.0.0
+  description: >-
+    High-speed, OpenAI-compatible and Anthropic-compatible LLM inference API
+    for coding assistants and personal agents with 1M-token context windows,
+    prompt caching, tool calling, structured JSON outputs, and strict Zero Data
+    Retention (ZDR).
+  contact:
+    name: BF16 Team
+    url: https://bf16.ai/docs
+    email: hello@bf16.ai
+  license:
+    name: Commercial Terms of Service
+    url: https://bf16.ai/legal/terms
+  x-logo:
+    url: https://bf16.ai/logo.png
+externalDocs:
+  description: bf16.ai API Documentation
+  url: https://bf16.ai/docs
+servers:
+  - url: https://api.bf16.ai/v1
+    description: Production API Gateway
+tags:
+  - name: Models
+    description: Live model catalog, capabilities, context windows, and per-token pricing
+  - name: Chat Completions
+    description: OpenAI-compatible Chat Completions API
+  - name: Responses
+    description: OpenAI-compatible Responses API
+  - name: Messages
+    description: Native Anthropic Messages API
+paths:
+  /models:
+    get:
+      operationId: listModels
+      summary: List available models and live pricing
+      description: >-
+        Returns active models with context window sizes, supported capabilities
+        (vision, tools, reasoning, structured outputs), and live USD per-token
+        pricing. Can also be called with a Bearer token to verify API key
+        validity at zero cost.
+      tags:
+        - Models
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active model catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListResponse'
+        '401':
+          description: Invalid or revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /chat/completions:
+    post:
+      operationId: createChatCompletion
+      summary: Create a chat completion (OpenAI-compatible)
+      description: >-
+        Generates a model response for the given chat conversation. Supports
+        streaming (SSE), parallel function/tool calling, vision inputs,
+        structured JSON schema outputs, reasoning effort, and automatic prompt
+        caching.
+      tags:
+        - Chat Completions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+      responses:
+        '200':
+          description: Chat completion response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '402':
+          description: Insufficient wallet balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate or concurrency limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /responses:
+    post:
+      operationId: createResponse
+      summary: Create a response (OpenAI Responses API)
+      description: >-
+        OpenAI Responses API compatible endpoint for agentic workflows such as
+        Codex CLI, supporting multi-turn input items, tool calls, reasoning
+        controls, and streaming events.
+      tags:
+        - Responses
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResponsesRequest'
+      responses:
+        '200':
+          description: Response object
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /messages:
+    post:
+      operationId: createAnthropicMessage
+      summary: Create a message (Anthropic Messages API)
+      description: >-
+        Native Anthropic Messages API endpoint compatible with Claude Code and
+        Anthropic SDKs, supporting system prompts, prompt-cache breakpoints,
+        tool use blocks, extended thinking, and SSE streaming.
+      tags:
+        - Messages
+      security:
+        - anthropicApiKey: []
+        - bearerAuth: []
+      parameters:
+        - name: anthropic-version
+          in: header
+          required: false
+          description: Anthropic API version header (e.g. 2023-06-01)
+          schema:
+            type: string
+            default: '2023-06-01'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnthropicMessageRequest'
+      responses:
+        '200':
+          description: Anthropic Message response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: API key obtained from https://bf16.ai/dashboard/keys
+    anthropicApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Anthropic-style API key header accepted on /v1/messages
+  schemas:
+    ModelListResponse:
+      type: object
+      required:
+        - object
+        - data
+      properties:
+        object:
+          type: string
+          example: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelObject'
+    ModelObject:
+      type: object
+      required:
+        - id
+        - object
+      properties:
+        id:
+          type: string
+          example: deepseek/deepseek-v4.1-flash-uncensored-fast
+        object:
+          type: string
+          example: model
+        owned_by:
+          type: string
+          example: deepseek
+        context_length:
+          type: integer
+          example: 1048576
+        max_output_tokens:
+          type: integer
+          example: 65536
+        pricing:
+          type: object
+          properties:
+            prompt:
+              type: string
+              example: '0.00000028'
+            completion:
+              type: string
+              example: '0.00000112'
+            input_cache_read:
+              type: string
+              example: '0.000000055'
+    ChatMessage:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum:
+            - system
+            - developer
+            - user
+            - assistant
+            - tool
+        content:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+                additionalProperties: true
+    ChatCompletionRequest:
+      type: object
+      required:
+        - model
+        - messages
+      properties:
+        model:
+          type: string
+          example: deepseek/deepseek-v4.1-flash-uncensored-fast
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+        max_tokens:
+          type: integer
+          minimum: 1
+        stream:
+          type: boolean
+          default: false
+        tools:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        response_format:
+          type: object
+          additionalProperties: true
+        reasoning_effort:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+    ChatCompletionResponse:
+      type: object
+      required:
+        - id
+        - object
+        - choices
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          example: chat.completion
+        created:
+          type: integer
+        model:
+          type: string
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              message:
+                $ref: '#/components/schemas/ChatMessage'
+              finish_reason:
+                type: string
+        usage:
+          type: object
+          properties:
+            prompt_tokens:
+              type: integer
+            completion_tokens:
+              type: integer
+            total_tokens:
+              type: integer
+    ResponsesRequest:
+      type: object
+      required:
+        - model
+        - input
+      properties:
+        model:
+          type: string
+          example: deepseek/deepseek-v4.1-flash-uncensored-fast
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+                additionalProperties: true
+        instructions:
+          type: string
+        max_output_tokens:
+          type: integer
+        stream:
+          type: boolean
+          default: false
+    AnthropicMessageRequest:
+      type: object
+      required:
+        - model
+        - max_tokens
+        - messages
+      properties:
+        model:
+          type: string
+          example: zai-org/glm-5.3-uncensored
+        max_tokens:
+          type: integer
+          example: 4096
+        system:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+                additionalProperties: true
+        messages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        stream:
+          type: boolean
+          default: false
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            type:
+              type: string
+            code:
+              type: string
