@@ -255,7 +255,7 @@ components:
             - assistant
             - tool
         content:
-          description: Text string or array of multimodal content parts. Vision-enabled models accept inline base64 data URIs in image/jpeg, image/png, image/gif, and image/webp (normalized in memory before upstream dispatch; video, PDF, BMP, HEIC/HEIF, and remote image URLs are not accepted).
+          description: Text string or array of multimodal content parts. Vision-enabled models accept inline base64 data URIs in image/jpeg, image/png, image/gif, and image/webp (normalized in memory before upstream dispatch; video, PDF, BMP, HEIC/HEIF, and remote image URLs are not accepted). A request forwards at most 20 images (10 on Kimi K3.1 Pro; see `bf16.max_images` in /models). When a multi-turn or agent conversation carries more, the oldest images from earlier turns are replaced, in batches, with a short text placeholder instead of failing the request, and the `x-bf16-images-omitted` response header reports how many. Images after the last assistant message are never omitted; if they alone exceed the limit, the request fails with `too_many_images`.
           oneOf:
             - type: string
             - type: array
