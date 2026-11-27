@@ -278,9 +278,14 @@ components:
           type: number
           minimum: 0
           maximum: 2
+        max_completion_tokens:
+          type: integer
+          minimum: 1
+          description: Maximum number of completion tokens to generate (preferred OpenAI field; takes precedence over legacy max_tokens when both are supplied).
         max_tokens:
           type: integer
           minimum: 1
+          description: Legacy alias for max_completion_tokens.
         stream:
           type: boolean
           default: false
